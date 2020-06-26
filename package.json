@@ -1,0 +1,28 @@
+{
+  "name": "nl_s",
+  "version": "0.1.0",
+  "description": "server for NL shop",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrkelder/nl_s.git"
+  },
+  "keywords": [
+    "shop",
+    "nl",
+    "server"
+  ],
+  "author": "Vlad A",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrkelder/nl_s/issues"
+  },
+  "homepage": "https://github.com/mrkelder/nl_s#readme",
+  "dependencies": {
+    "fastify": "^2.15.0",
+    "mongodb": "^3.5.9"
+  }
+}
