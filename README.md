@@ -28,6 +28,8 @@ project
 │
 └───node_modules
 │
+└───static - folder for static files
+│
 └───server
     │ route.js - file , that serves routes
 
@@ -57,4 +59,11 @@ fastify.mongodb( (obj) => {} )
 ### route.js
 
 Takes place in **server/route.js**.
+
+Serves routes of the project.
+
+#### GET
+
+1) /callMeBack - serves call me back logic and sends message to a telegram chat
+2) /getCatalog - sends catalog that it takes from a server
 

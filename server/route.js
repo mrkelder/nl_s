@@ -1,6 +1,6 @@
 async function route(fastify, object) {
 
-  const { bot } = object;
+  const { bot, assert } = object;
 
   fastify.get('/', (req, reply) => {
     const fs = require('fs');
@@ -13,8 +13,26 @@ async function route(fastify, object) {
     const { number } = req.query;
     if (condition.test(number)) {
       bot.sendMessage({ chat_id: process.env.TELEGRAM_CHAT, text: `Горячая линия: ${number}` })
-        .then(() => { reply.send('Мы перезвоним вам в ближайшее время'); });
+        .then(() => {
+          reply
+            .code(200)
+            .header('Access-Control-Allow-Origin', '*')
+            .send('Мы перезвоним вам в ближайшее время');
+        });
     }
+  });
+
+  fastify.get('/getCatalog', (req, reply) => {
+    fastify.mongodb(({ db, client }) => {
+      db.collection('catalog').find({}).toArray((err, arr) => {
+        assert.equal(err, null);
+        reply
+          .code(200)
+          .header('Access-Control-Allow-Origin', '*')
+          .send(JSON.stringify(arr));
+        client.close();
+      });
+    });
   });
 }
 

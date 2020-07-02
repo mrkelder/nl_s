@@ -1,18 +1,24 @@
 const fastify = require('fastify')();
 const assert = require('assert');
+const path = require('path');
 require('dotenv').config();
 const telegram = require('telegram-bot-api');
 const api = new telegram({
   token: process.env.TELEGRAM_TOKEN
 });
 
-fastify.register(require('./server/route'), { bot: api });
+fastify
+  .register(require('./server/route'), { bot: api, assert: assert })
+  .register(require('fastify-static'), {
+    root: path.join(__dirname, '/static'),
+    prefix: '/'
+  });
 
 fastify.decorate('mongodb', func => {
   // Mongodb decoration
   const mongodb = require('mongodb');
   const MongoCLient = mongodb.MongoClient;
-  const client = new MongoCLient('mongodb://localhost:27017');
+  const client = new MongoCLient('mongodb://localhost:27017', { useUnifiedTopology: true });
 
   client.connect(err => {
     assert.equal(err, null);
