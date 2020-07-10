@@ -20,18 +20,38 @@ async function route(fastify, object) {
             .send('Мы перезвоним вам в ближайшее время');
         });
     }
+    else {
+      reply
+        .code(300)
+        .header('Access-Control-Allow-Origin', '*')
+        .send('Простите , что-то пошло не так');
+    }
   });
 
   fastify.get('/getCatalog', (req, reply) => {
-    fastify.mongodb(({ db, client }) => {
-      db.collection('catalog').find({}).toArray((err, arr) => {
-        assert.equal(err, null);
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      try {
+        const catalog = await db.collection('catalog').find({}).toArray();
+        const newCatalog = catalog;
+
+        for (let [itemIndex, item] of catalog.entries()) {
+          for (let [companiesIndex, companies] of item.items.entries()) {
+            for (let [companyIndex, company] of companies.companies.entries()) {
+              const foundCompany = await db.collection('companies').find({ _id: mongodb.ObjectID(company) }).toArray();
+              newCatalog[itemIndex].items[companiesIndex].companies[companyIndex] = foundCompany[0];
+            }
+          }
+        }
+        db.collection('compannies').find({})
         reply
           .code(200)
           .header('Access-Control-Allow-Origin', '*')
-          .send(JSON.stringify(arr));
+          .send(JSON.stringify(newCatalog));
         client.close();
-      });
+      }
+      catch (err) {
+        console.error(err.message);
+      }
     });
   });
 }
