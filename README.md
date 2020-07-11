@@ -64,6 +64,6 @@ Serves routes of the project.
 
 #### GET
 
-1) /callMeBack - serves call me back logic and sends message to a telegram chat
+1) /callMeBack - serves call me back logic and sends message to a telegram chat *(requires number query)*
 2) /getCatalog - sends catalog that it takes from a server
 
