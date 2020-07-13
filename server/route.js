@@ -8,6 +8,17 @@ async function route(fastify, object) {
     reply.send(`Welcome to NL server ${JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version}`);
   });
 
+  fastify.get('/getSlides', (req, reply) => {
+    fastify.mongodb(async ({ db, client }) => {
+      const slides = await db.collection('ad').find({ name: 'slider' }).project({ _id: 0, name: 0 }).toArray();
+      client.close();
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(slides[0]);
+    });
+  });
+
   fastify.get('/callMeBack', (req, reply) => {
     const condition = /^\+?(\d{2,3})?\s?\(?\d{2,3}\)?[ -]?\d{2,3}[ -]?\d{2,3}[ -]?\d{2,3}$/i;
     const { number } = req.query;
