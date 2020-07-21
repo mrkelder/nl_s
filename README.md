@@ -66,4 +66,48 @@ Serves routes of the project.
 
 1) /callMeBack - serves call me back logic and sends message to a telegram chat *(requires number query)*
 2) /getCatalog - sends catalog that it takes from a server
+```
+[
+  {
+    img: 'image.png',
+    items: [
+      {
+        name : {
+          ru: 'ru',
+          ua: 'ua'
+        },
+        link: '/link',
+        companies: [
+          {
+            link: 'apple',
+            name: 'Apple',
+            _id: 'fh2iu27eufhsi8edu7e3'
+          },
+          ...
+        ]
+      },
+      ...
+    ],
+    link: '/link',
+    name: {
+      ru: 'ru',
+      ua: 'ua'
+    },
+    _id: '4k1h2kji12uy3412'
+  },
+  ...
+]
+```
+3) /getSlides - retrieves slides for a slider in Main page
+```
+{
+  slides: [
+    {
+      mobile: 'someImage.png',
+      pc: 'anotherOne.png'
+    },
+    ...
+  ]
+}
+```
 
