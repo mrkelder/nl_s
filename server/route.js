@@ -19,6 +19,26 @@ async function route(fastify, object) {
     });
   });
 
+  fastify.get('/getTopItems', (req, reply) => {
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      const topItems = await db.collection('ad').find({ name: 'top_items' }).project({ _id: 0, name: 0 }).toArray();
+      const ids = [];
+      let items;
+
+      for (let i of topItems[0].items) {
+        ids.push(mongodb.ObjectID(i));
+      }
+
+      items = await db.collection('items').find({ _id: { $in: ids } }).toArray();
+
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(items);
+      client.close();
+    });
+  });
+
   fastify.get('/callMeBack', (req, reply) => {
     const condition = /^\+?(\d{2,3})?\s?\(?\d{2,3}\)?[ -]?\d{2,3}[ -]?\d{2,3}[ -]?\d{2,3}$/i;
     const { number } = req.query;
