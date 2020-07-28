@@ -59,6 +59,17 @@ async function route(fastify, object) {
     }
   });
 
+  fastify.get('/getBanners', (req, reply) => {
+    fastify.mongodb(async ({ db, client }) => {
+      const info = await db.collection('ad').find({ name: 'banners' }).project({ img: 1 , _id: 0}).toArray();
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(info[0].img);
+      client.close();
+    });
+  });
+
   fastify.get('/getCatalog', (req, reply) => {
     fastify.mongodb(async ({ db, client, mongodb }) => {
       try {

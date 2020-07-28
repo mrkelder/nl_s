@@ -110,4 +110,43 @@ Serves routes of the project.
   ]
 }
 ```
-
+4) /getTopItems - retrieves top items from the server
+```
+[
+  {
+    _id: '2f2sdf2112eef',
+    name: 'iPhone',
+    properties: [
+      {
+        name: 'Стандарт связи',
+        value: '4G'
+      },
+      ...
+    ],
+    themes:[
+      {
+        price: 999 999,
+        main_photo: 'wddedwdae.jpg',
+        photos: [
+          'wddedwdae.jpg',
+          ...
+        ],
+        color: '#000',
+        rating: 4
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
+5) /getBanners - retrieves banners
+```
+[
+  {
+    name: 'dsfadfsdfd.jpg',
+    link: '/item/fiueuejfkefefuhef'
+  },
+  ...
+]
+```
