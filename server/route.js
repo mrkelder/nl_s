@@ -59,9 +59,33 @@ async function route(fastify, object) {
     }
   });
 
+  fastify.get('/getShops', (req, reply) => {
+    fastify.mongodb(async ({ db, client , mongodb}) => {
+      const cities = await db.collection('cities').find({}).toArray();
+      const readyCities = [];
+
+      for(let city of cities){
+        const currentCity = city;
+        const prepearingCity = [];
+        for(let shop of city.shops){
+          const city = await db.collection('shops').find({ _id: mongodb.ObjectID(shop) }).toArray();
+          prepearingCity.push(city[0]);
+        }
+        currentCity.shops = prepearingCity;
+        readyCities.push(currentCity);
+      }
+
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(readyCities);
+      client.close();
+    });
+  });
+
   fastify.get('/getBanners', (req, reply) => {
     fastify.mongodb(async ({ db, client }) => {
-      const info = await db.collection('ad').find({ name: 'banners' }).project({ img: 1 , _id: 0}).toArray();
+      const info = await db.collection('ad').find({ name: 'banners' }).project({ img: 1, _id: 0 }).toArray();
       reply
         .code(200)
         .header('Access-Control-Allow-Origin', '*')
