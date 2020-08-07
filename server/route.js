@@ -1,6 +1,6 @@
 async function route(fastify, object) {
 
-  const { bot, assert } = object;
+  const { bot } = object;
 
   fastify.get('/', (req, reply) => {
     const fs = require('fs');
@@ -9,6 +9,7 @@ async function route(fastify, object) {
   });
 
   fastify.get('/getSlides', (req, reply) => {
+    // Gives slides for slider in the main page
     fastify.mongodb(async ({ db, client }) => {
       const slides = await db.collection('ad').find({ name: 'slider' }).project({ _id: 0, name: 0 }).toArray();
       client.close();
@@ -20,6 +21,7 @@ async function route(fastify, object) {
   });
 
   fastify.get('/getTopItems', (req, reply) => {
+    // Gives top items for the main page
     fastify.mongodb(async ({ db, client, mongodb }) => {
       const topItems = await db.collection('ad').find({ name: 'top_items' }).project({ _id: 0, name: 0 }).toArray();
       const ids = [];
@@ -60,21 +62,22 @@ async function route(fastify, object) {
   });
 
   fastify.get('/getShops', (req, reply) => {
-    fastify.mongodb(async ({ db, client , mongodb}) => {
+    // Gets all available shops
+    fastify.mongodb(async ({ db, client, mongodb }) => {
       const cities = await db.collection('cities').find({}).toArray();
       const readyCities = [];
 
-      for(let city of cities){
+      for (let city of cities) {
         const currentCity = city;
         const prepearingCity = [];
-        for(let shop of city.shops){
+        for (let shop of city.shops) {
+          // Gets shops depending on city
           const city = await db.collection('shops').find({ _id: mongodb.ObjectID(shop) }).toArray();
           prepearingCity.push(city[0]);
         }
         currentCity.shops = prepearingCity;
         readyCities.push(currentCity);
       }
-
       reply
         .code(200)
         .header('Access-Control-Allow-Origin', '*')
@@ -84,6 +87,7 @@ async function route(fastify, object) {
   });
 
   fastify.get('/getBanners', (req, reply) => {
+    // Gets banners for the main page (/ - root)
     fastify.mongodb(async ({ db, client }) => {
       const info = await db.collection('ad').find({ name: 'banners' }).project({ img: 1, _id: 0 }).toArray();
       reply
@@ -95,6 +99,7 @@ async function route(fastify, object) {
   });
 
   fastify.get('/getCatalog', (req, reply) => {
+    // Retrieves the catalog for the header 
     fastify.mongodb(async ({ db, client, mongodb }) => {
       try {
         const catalog = await db.collection('catalog').find({}).toArray();
