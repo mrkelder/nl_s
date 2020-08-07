@@ -1,6 +1,6 @@
 {
   "name": "nl_s",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "server for NL shop",
   "main": "app.js",
   "scripts": {
@@ -22,7 +22,10 @@
   },
   "homepage": "https://github.com/mrkelder/nl_s#readme",
   "dependencies": {
+    "dotenv": "^8.2.0",
     "fastify": "^2.15.0",
-    "mongodb": "^3.5.9"
+    "fastify-static": "^2.7.0",
+    "mongodb": "^3.5.9",
+    "telegram-bot-api": "^1.3.4"
   }
 }
