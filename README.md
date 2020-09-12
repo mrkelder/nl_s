@@ -150,3 +150,108 @@ Serves routes of the project.
   ...
 ]
 ```
+
+6) /getProperties - receives the properties for some certain category of items (e.g. smarphones)
+```
+[
+  {
+    name: "Память",
+    values: [
+    "32Gb",
+    ...
+    ]
+  },
+  ...
+  ]
+```
+
+7) /getShops - gives the shops for the google map
+```
+[
+  {
+    _id: 'f3n12ueb8bksncogk',
+    name: {
+      ru: 'dd',
+      ua: 'di'
+    },
+    shops: [
+      {
+        _id: 'fh82hkxchseie',
+        name: 'New London in dd',
+        location: {
+          type: 'Point',
+          coordinates: [x , y]
+        },
+        work_time: [
+          {
+            day: {
+              ru: 'Monday',
+              ua: 'Mondai'
+            },
+            time: '7:00 - 18:00'
+          },
+          ...
+        ]
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
+
+8) /getCompaniesForStore - gives a list of companies that have devices connected with current category
+```
+[
+  { 
+    _id: 'nr83hofdjf8wefoiehf23oi',
+    link: 'apple',
+    name: 'Apple',
+    items: [
+      {
+        name: '/smartphones',
+        products: [
+          'fff33f322e232f',
+          ...
+        ]
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
+
+9) /getItems - retrieves items for shop
+```
+[
+  {
+    _id: 'fdsfdsfjeh23j24'
+    brand: "5f02e1faf1dcd83abc2e972a",
+    link: "smartphones",
+    name: "iPhone 11",
+    properties: [
+      {
+        name: 'dsd',
+        value: 'fdfd'
+      },
+      ...
+    ],
+    themes: [
+      {
+        color: '#000',
+        main_photo: 'fff.png',
+        photos: [
+          'fff.png',
+          ...
+        ],
+        price: 2000,
+        rating: 4
+      },
+      ...
+    ]
+  },
+  ...
+]
+
+```

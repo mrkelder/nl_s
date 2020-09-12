@@ -8,6 +8,30 @@ async function route(fastify, object) {
     reply.send(`Welcome to NL server ${JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'))).version}`);
   });
 
+  fastify.get('/getProperties', (req, reply) => {
+    const { category } = req.query;
+    if (category !== undefined) {
+      fastify.mongodb(async ({ db, client }) => {
+        const [data] = await db.collection('ad').find({ name: 'properties' }).project({ prop: 1, _id: 0 }).toArray();
+        let properties = [];
+        try {
+          properties = data.prop[data.prop.findIndex(i => i.name === category)].properties;
+        }
+        catch (err) {
+          console.error('Empty property query in the store\n└───', err.message);
+        }
+        finally {
+          reply
+            .code(200)
+            .header('Access-Control-Allow-Origin', '*')
+            .send(properties);
+          client.close();
+        }
+      });
+    }
+    else reply.header('Access-Control-Allow-Origin', '*').code(500).send('Set the category!');
+  });
+
   fastify.get('/getSlides', (req, reply) => {
     // Gives slides for slider in the main page
     fastify.mongodb(async ({ db, client }) => {
@@ -98,6 +122,19 @@ async function route(fastify, object) {
     });
   });
 
+  fastify.get('/getCompaniesForStore', (req, reply) => {
+    const category = `/${req.query.category}`;
+    fastify.mongodb(async ({ db, client }) => {
+      // Retrieves the list of the companies that have certain products
+      const companies = await db.collection('companies').find({ 'items.name': category }).toArray();
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(companies);
+      client.close();
+    });
+  });
+
   fastify.get('/getCatalog', (req, reply) => {
     // Retrieves the catalog for the header 
     fastify.mongodb(async ({ db, client, mongodb }) => {
@@ -123,6 +160,51 @@ async function route(fastify, object) {
       catch (err) {
         console.error(err.message);
       }
+    });
+  });
+
+  fastify.get('/getItems', (req, reply) => {
+    const { itemsCategory, amountOfIncoming, extraInfo } = req.query;
+
+    let configuration = { link: itemsCategory };
+    let sort = {};
+
+    if (extraInfo !== undefined && typeof JSON.parse(extraInfo) === 'object' && JSON.parse(extraInfo).status !== 1) {
+      const extraConfig = JSON.parse(extraInfo);
+      const { properties, maxPrice, minPrice, pickedCompanies, sequence } = extraConfig;
+
+      // If any brands are picked then search items by the picked brands
+      if (pickedCompanies.length > 0) configuration.brand = { $in: pickedCompanies };
+
+      // If any properties are picked then search items by the picked properties
+      if (properties !== undefined && properties.length > 0) configuration.properties = { $in: properties };
+
+      // Looks for items whoose prices fit the range of price
+      configuration['themes.price'] = { $gte: minPrice, $lte: maxPrice };
+
+      // Sorts items by the sequence
+      switch (sequence) {
+        case 1: sort = {}; break;
+        case 2: sort['themes.price'] = -1; break;
+        case 3: sort['themes.price'] = 1; break;
+        default: sort = {}; break;
+      }
+    }
+
+    fastify.mongodb(async ({ db, client }) => {
+      const items = await db.collection('items').find(configuration).limit(Number(amountOfIncoming)).sort(sort).toArray();
+      let readyItems;
+      if (extraInfo !== undefined && JSON.parse(extraInfo).status === 1) {
+        readyItems = items.filter(i => JSON.parse(extraInfo).pickedCompanies.includes(i.brand))
+      }
+      else {
+        readyItems = items;
+      }
+      reply
+        .code(200)
+        .header('Access-Control-Allow-Origin', '*')
+        .send(readyItems);
+      client.close();
     });
   });
 }
