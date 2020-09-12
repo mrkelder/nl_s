@@ -1,5 +1,7 @@
 # Server for an online shop "New London"
 
+## Version 0.3
+
 This project is the online shop that's called "New London". Actually I've already tried to make it before ,
 but because of some crash everything was destroyed and therefore lost (I'm talking about a database). Then I decided
 to write the same project , but using react and separeted server instead of rewriting that lost version again.
