@@ -1,6 +1,7 @@
 const fastify = require('fastify')();
 const assert = require('assert');
 const path = require('path');
+const crypto = require('crypto')
 require('dotenv').config();
 const telegram = require('telegram-bot-api');
 const api = new telegram({
@@ -9,6 +10,9 @@ const api = new telegram({
 
 fastify
   .register(require('./server/route'), { bot: api, assert: assert })
+  .register(require('./server/account') , { crypto: crypto })
+  .register(require('fastify-formbody'))
+  .register(require('fastify-cors'))
   .register(require('fastify-static'), {
     root: path.join(__dirname, '/static'),
     prefix: '/'
