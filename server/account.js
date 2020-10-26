@@ -1,6 +1,7 @@
 async function account(fastify, object) {
-  const { sendEmail } = require('./mailer');
-  const { crypto } = object;
+  const { sendEmail } = require('../modules/mailer');
+  const User = require('../modules/user');
+  const { crypto, upload, fs, path } = object;
   const emailRegEx = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
   fastify.post('/registrate', (req, reply) => {
@@ -9,9 +10,11 @@ async function account(fastify, object) {
       // Checks for proper length of password and email , looks for proper email shape
       if ([...password].length >= 6 && [...email].length >= 5 && emailRegEx.test(email) && [...name].length >= 2) {
         // Security
-        const passwordHash = crypto.pbkdf2Sync(password, email, 100000, 64, 'sha512');
-        const normolisedPasswordHash = passwordHash.toString('hex');
-        const acceptanceCode = crypto.randomBytes(4).toString('hex');
+
+        const user = new User({ password: password, email: email });
+
+        const normolisedPasswordHash = user.getReadyPassword();
+        const acceptanceCode = user.createAcceptanceCode();
 
         // Forming the email data
         const pickedLang = lang === 'ua' || lang === 'ru' ? lang : 'ua';
@@ -40,7 +43,7 @@ async function account(fastify, object) {
               subject: subject,
               html: text
             });
-            await db.collection('users').insertOne({ name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode });
+            await db.collection('users').insertOne({ photo: 'default', phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode });
             reply.code(200).send('Let user enter the code');
           }
           client.close();
@@ -95,30 +98,125 @@ async function account(fastify, object) {
   fastify.post('/authorisation', (req, reply) => {
     // Authorisation
     const { email, password } = req.body;
-    const passwordHash = crypto.pbkdf2Sync(password, email, 100000, 64, 'sha512');
-    const readyPassword = passwordHash.toString('hex');
+    const user = new User({ email: email, password: password });
+    const readyPassword = user.getReadyPassword();
 
     fastify.mongodb(async ({ db, client }) => {
       // Does this account exist
       const mathUser = await db.collection('users').find({ email, password: readyPassword }).toArray();
       if (mathUser.length === 0) reply.code(200).send('Something went wrong');
-      else if(!mathUser[0].isActivated) reply.code(200).send('User has not accepted his code')
+      else if (!mathUser[0].isActivated) reply.code(200).send('User has not accepted his code')
       else reply.code(200).send('Okay');
       client.close();
     });
   });
 
-  fastify.post('/getUser' , (req , reply) => {
+  fastify.post('/getUser', (req, reply) => {
     // Looking for information about the user
     const { email, password } = req.body;
-    const passwordHash = crypto.pbkdf2Sync(password, email, 100000, 64, 'sha512');
-    const readyPassword = passwordHash.toString('hex');
+    const user = new User({ email: email, password: password });
+    const readyPassword = user.getReadyPassword();
+
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      // Does this account exist
+      const [mathUser] = await db.collection('users').find({ email, password: readyPassword }).project({ password: 0, code: 0, _id: 0 }).toArray();
+      const properLatelySeen = [];
+      const properBought = [];
+
+      for (let i of mathUser.latelySeen) {
+        const [oneItem] = await db.collection('items').find({ _id: mongodb.ObjectID(i) }).toArray();
+        properLatelySeen.push(oneItem);
+      }
+
+      for (let i of mathUser.bought) {
+        const [oneItem] = await db.collection('items').find({ _id: mongodb.ObjectID(i) }).toArray();
+        properBought.push(oneItem);
+      }
+
+      mathUser.latelySeen = properLatelySeen;
+      mathUser.bought = properBought;
+
+      reply.code(200).send(mathUser);
+      client.close();
+    });
+  });
+
+  fastify.route({
+    method: 'POST',
+    url: '/changeUserParams',
+    preHandler: upload.single('file'),
+    handler: async function (req, reply) {
+
+      const condition = /^\+?(\d{2,3})?\s?\(?\d{2,3}\)?[ -]?\d{2,3}[ -]?\d{2,3}[ -]?\d{2,3}$/i;
+      let originalname, destination, filename;
+      if (req.file) {
+        originalname = req.file.originalname;
+        destination = req.file.destination;
+        filename = req.file.filename;
+      }
+      const { phone, password, email } = req.body;
+
+      const user = new User({ email: email, password: password, fastify: fastify });
+      const readyPassowrd = user.getReadyPassword();
+
+      let extension, pathToUploadedFile, pathToNewFile, fileData;
+      if (req.file) {
+        extension = path.extname(originalname);
+        pathToUploadedFile = path.join(__dirname, '../', destination, filename);
+        pathToNewFile = path.join(__dirname, '../static', `${filename}${extension}`);
+        fileData = fs.readFileSync(pathToUploadedFile);
+      }
+
+      if (await user.userExists()) {
+        if (req.file) {
+          fs.writeFileSync(pathToNewFile, fileData);
+          fs.unlinkSync(pathToUploadedFile);
+          fastify.mongodb(async ({ db, client }) => {
+            let configutation = { photo: `${filename}${extension}` };
+            if (condition.test(phone)) configutation.phone = phone;
+            console.log(configutation)
+            await db.collection('users').updateOne({ email: email, password: readyPassowrd }, { $set: configutation });
+            client.close();
+            reply.code(200).send('SUCCESS');
+          });
+        }
+        else if (condition.test(phone)) {
+          fastify.mongodb(async ({ db, client }) => {
+            await db.collection('users').updateOne({ email: email, password: readyPassowrd }, { $set: { phone: phone } });
+            client.close();
+            reply.code(200).send('SUCCESS');
+          });
+        }
+        else {
+          reply.code(500).send('NOT SUCCESS');
+        }
+      }
+      else {
+        reply.code(500).send('NOT SUCCESS');
+      }
+    }
+  });
+
+  fastify.post('/getLatelySeenProduct', (req, reply) => {
+    const { productId, email, password } = req.body;
+    const user = new User({ email: email, password: password });
+    const readyPassword = user.getReadyPassword();
 
     fastify.mongodb(async ({ db, client }) => {
-      // Does this account exist
-      const mathUser = await db.collection('users').find({ email, password: readyPassword }).project({ password: 0 , code: 0 , _id: 0 }).toArray();
-      reply.code(200).send(mathUser[0]);
+      const [user] = await db.collection('users').find({ password: readyPassword, email }).toArray();
+      if (!user.latelySeen.includes(productId)) {
+        await db.collection('users').updateOne({ password: readyPassword, email }, {
+          $push: {
+            latelySeen: {
+              $each: [productId],
+              $position: 0,
+              $slice: 20
+            }
+          }
+        });
+      }
       client.close();
+      reply.send('Okay');
     });
   });
 }

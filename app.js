@@ -1,7 +1,12 @@
 const fastify = require('fastify')();
 const assert = require('assert');
 const path = require('path');
-const crypto = require('crypto')
+const crypto = require('crypto');
+const fs = require('fs');
+
+const multer = require('fastify-multer');
+const upload = multer({ dest: 'uploads/' });
+
 require('dotenv').config();
 const telegram = require('telegram-bot-api');
 const api = new telegram({
@@ -9,8 +14,10 @@ const api = new telegram({
 });
 
 fastify
+  .register(multer.contentParser)
   .register(require('./server/route'), { bot: api, assert: assert })
-  .register(require('./server/account') , { crypto: crypto })
+  .register(require('./server/account'), { crypto: crypto, upload: upload , fs: fs, path: path })
+  .register(require('./server/item'))
   .register(require('fastify-formbody'))
   .register(require('fastify-cors'))
   .register(require('fastify-static'), {
