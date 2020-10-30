@@ -1,4 +1,13 @@
-async function item(fastify, object) {
+async function item(fastify) {
+
+  fastify.get('/searchItem', (req, reply) => {
+    const { text } = req.query;
+    fastify.mongodb(async ({ db, client }) => {
+      const data = await db.collection('items').find({ $text: { $search: text } }).limit(5).toArray();
+      reply.send(data);
+      client.close();
+    });
+  });
 
   fastify.post('/sendComment', (req, reply) => {
     const { allInfoAboutUser, text, adv, disadv, rating, productId, date, theme } = req.body;

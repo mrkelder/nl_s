@@ -1,7 +1,7 @@
 async function account(fastify, object) {
   const { sendEmail } = require('../modules/mailer');
   const User = require('../modules/user');
-  const { crypto, upload, fs, path } = object;
+  const { upload, fs, path } = object;
   const emailRegEx = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
   fastify.post('/registrate', (req, reply) => {
@@ -43,7 +43,7 @@ async function account(fastify, object) {
               subject: subject,
               html: text
             });
-            await db.collection('users').insertOne({ photo: 'default', phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode });
+            await db.collection('users').insertOne({ photo: 'default', phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode , latelySeen: [] , bought: []});
             reply.code(200).send('Let user enter the code');
           }
           client.close();
@@ -174,7 +174,6 @@ async function account(fastify, object) {
           fastify.mongodb(async ({ db, client }) => {
             let configutation = { photo: `${filename}${extension}` };
             if (condition.test(phone)) configutation.phone = phone;
-            console.log(configutation)
             await db.collection('users').updateOne({ email: email, password: readyPassowrd }, { $set: configutation });
             client.close();
             reply.code(200).send('SUCCESS');
