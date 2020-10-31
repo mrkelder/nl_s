@@ -163,6 +163,22 @@ async function route(fastify, object) {
     });
   });
 
+  fastify.get('/getItem', (req, reply) => {
+    // Looks for a certain item
+    const { id } = req.query;
+    if (id !== undefined) {
+      fastify.mongodb(async ({ db, client, mongodb }) => {
+        const data = await db.collection('items').find({ _id: mongodb.ObjectID(id) }).toArray();
+        reply
+          .code(200)
+          .header('Access-Control-Allow-Origin', '*')
+          .send(data[0]);
+        client.close();
+      });
+    }
+    else reply.code(404).header('Access-Control-Allow-Origin', '*').send('Such item was not found');
+  });
+
   fastify.get('/getItems', (req, reply) => {
     const { itemsCategory, amountOfIncoming, extraInfo } = req.query;
 
