@@ -1,5 +1,7 @@
 # Server for an online shop "New London"
 
+## Version 0.4.0
+
 ## Version 0.3
 
 This project is the online shop that's called "New London". Actually I've already tried to make it before ,
