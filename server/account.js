@@ -43,7 +43,7 @@ async function account(fastify, object) {
               subject: subject,
               html: text
             });
-            await db.collection('users').insertOne({ photo: 'default', phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode , latelySeen: [] , bought: []});
+            await db.collection('users').insertOne({ photo: 'default', bin: [], phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode, latelySeen: [], bought: [] });
             reply.code(200).send('Let user enter the code');
           }
           client.close();
@@ -214,6 +214,31 @@ async function account(fastify, object) {
           }
         });
       }
+      client.close();
+      reply.send('Okay');
+    });
+  });
+
+  fastify.post('/getBinItem', (req, reply) => {
+    const { productId, email, password } = req.body;
+    const user = new User({ email, password, fastify });
+    const readyPassowrd = user.getReadyPassword();
+
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      const [item] = await db.collection('items').find({ _id: mongodb.ObjectID(productId) }).toArray();
+      await db.collection('users').updateOne({ email, password: readyPassowrd }, { $push: { bin: item } });
+      client.close();
+      reply.send('Okay');
+    });
+  });
+
+  fastify.post('/removeBinItem', (req, reply) => {
+    const { productId, email, password } = req.body;
+    const user = new User({ email, password, fastify });
+    const readyPassowrd = user.getReadyPassword();
+
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      await db.collection('users').updateOne({ email, password: readyPassowrd }, { $pull: { bin: { _id: mongodb.ObjectID(productId) } } });
       client.close();
       reply.send('Okay');
     });
