@@ -16,7 +16,7 @@ const api = new telegram({
 fastify
   .register(multer.contentParser)
   .register(require('./server/route'), { bot: api, assert: assert })
-  .register(require('./server/account'), { crypto: crypto, upload: upload , fs: fs, path: path })
+  .register(require('./server/account'), { crypto: crypto, upload: upload, fs: fs, path: path, bot: api })
   .register(require('./server/item'))
   .register(require('fastify-formbody'))
   .register(require('fastify-cors'))

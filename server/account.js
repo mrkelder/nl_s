@@ -1,7 +1,7 @@
 async function account(fastify, object) {
   const { sendEmail } = require('../modules/mailer');
   const User = require('../modules/user');
-  const { upload, fs, path } = object;
+  const { upload, fs, path, bot } = object;
   const emailRegEx = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
   fastify.post('/registrate', (req, reply) => {
@@ -220,7 +220,7 @@ async function account(fastify, object) {
   });
 
   fastify.post('/getBoughtProduct', (req, reply) => {
-    const { email, password, bin } = req.body;
+    const { email, password, bin, name, address } = req.body;
     const user = new User({ email: email, password: password });
     const readyPassword = user.getReadyPassword();
     const boughtIds = bin.map(i => i._id);
@@ -236,6 +236,7 @@ async function account(fastify, object) {
         }
       });
       client.close();
+      bot.sendMessage({ chat_id: process.env.TELEGRAM_CHAT, text: `Покупатель: ${name}\nАдрес: ${address}\nТовары: ${boughtIds.join(', ')}` });
       reply.send('Okay');
     });
   });
