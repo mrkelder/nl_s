@@ -219,13 +219,35 @@ async function account(fastify, object) {
     });
   });
 
+  fastify.post('/getBoughtProduct', (req, reply) => {
+    const { email, password, bin } = req.body;
+    const user = new User({ email: email, password: password });
+    const readyPassword = user.getReadyPassword();
+    const boughtIds = bin.map(i => i._id);
+
+    fastify.mongodb(async ({ db, client }) => {
+      await db.collection('users').updateOne({ email: email, password: readyPassword }, {
+        $push: {
+          bought: {
+            $each: boughtIds,
+            $position: 0,
+            $slice: 20
+          }
+        }
+      });
+      client.close();
+      reply.send('Okay');
+    });
+  });
+
   fastify.post('/getBinItem', (req, reply) => {
-    const { productId, email, password } = req.body;
+    const { productId, email, password, themeIndex } = req.body;
     const user = new User({ email, password, fastify });
     const readyPassowrd = user.getReadyPassword();
 
     fastify.mongodb(async ({ db, client, mongodb }) => {
       const [item] = await db.collection('items').find({ _id: mongodb.ObjectID(productId) }).toArray();
+      item.themeIndex = themeIndex;
       await db.collection('users').updateOne({ email, password: readyPassowrd }, { $push: { bin: item } });
       client.close();
       reply.send('Okay');
