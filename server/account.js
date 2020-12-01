@@ -1,7 +1,7 @@
 async function account(fastify, object) {
   const { sendEmail } = require('../modules/mailer');
   const User = require('../modules/user');
-  const { upload, fs, path } = object;
+  const { upload, fs, path, bot } = object;
   const emailRegEx = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
   fastify.post('/registrate', (req, reply) => {
@@ -43,7 +43,7 @@ async function account(fastify, object) {
               subject: subject,
               html: text
             });
-            await db.collection('users').insertOne({ photo: 'default', phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode , latelySeen: [] , bought: []});
+            await db.collection('users').insertOne({ photo: 'default', bin: [], phone: null, name: name, email: email, password: normolisedPasswordHash, isActivated: false, code: acceptanceCode, latelySeen: [], bought: [] });
             reply.code(200).send('Let user enter the code');
           }
           client.close();
@@ -214,6 +214,54 @@ async function account(fastify, object) {
           }
         });
       }
+      client.close();
+      reply.send('Okay');
+    });
+  });
+
+  fastify.post('/getBoughtProduct', (req, reply) => {
+    const { email, password, bin, name, address } = req.body;
+    const user = new User({ email: email, password: password });
+    const readyPassword = user.getReadyPassword();
+    const boughtIds = bin.map(i => i._id);
+
+    fastify.mongodb(async ({ db, client }) => {
+      await db.collection('users').updateOne({ email: email, password: readyPassword }, {
+        $push: {
+          bought: {
+            $each: boughtIds,
+            $position: 0,
+            $slice: 20
+          }
+        }
+      });
+      client.close();
+      bot.sendMessage({ chat_id: process.env.TELEGRAM_CHAT, text: `Покупатель: ${name}\nАдрес: ${address}\nТовары: ${boughtIds.join(', ')}` });
+      reply.send('Okay');
+    });
+  });
+
+  fastify.post('/getBinItem', (req, reply) => {
+    const { productId, email, password, themeIndex } = req.body;
+    const user = new User({ email, password, fastify });
+    const readyPassowrd = user.getReadyPassword();
+
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      const [item] = await db.collection('items').find({ _id: mongodb.ObjectID(productId) }).toArray();
+      item.themeIndex = themeIndex;
+      await db.collection('users').updateOne({ email, password: readyPassowrd }, { $push: { bin: item } });
+      client.close();
+      reply.send('Okay');
+    });
+  });
+
+  fastify.post('/removeBinItem', (req, reply) => {
+    const { productId, email, password } = req.body;
+    const user = new User({ email, password, fastify });
+    const readyPassowrd = user.getReadyPassword();
+
+    fastify.mongodb(async ({ db, client, mongodb }) => {
+      await db.collection('users').updateOne({ email, password: readyPassowrd }, { $pull: { bin: { _id: mongodb.ObjectID(productId) } } });
       client.close();
       reply.send('Okay');
     });
