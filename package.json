@@ -29,7 +29,7 @@
     "fastify-multer": "^2.0.2",
     "fastify-static": "^3.2.0",
     "mongodb": "^3.6.2",
-    "nodemailer": "^6.4.11",
+    "nodemailer": "^6.4.16",
     "nodemon": "^2.0.6",
     "telegram-bot-api": "^2.0.1"
   }
