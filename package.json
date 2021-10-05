@@ -27,7 +27,7 @@
     "fastify-cors": "^4.1.0",
     "fastify-formbody": "^5.0.0",
     "fastify-multer": "^2.0.2",
-    "fastify-static": "^3.2.0",
+    "fastify-static": "^4.2.4",
     "mongodb": "^3.6.2",
     "nodemailer": "^6.4.11",
     "nodemon": "^2.0.6",
